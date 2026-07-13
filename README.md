@@ -110,3 +110,18 @@ Each workflow isolates its **Continuous Integration (CI)** and **Continuous Deli
 To run these workflows successfully, configure the following keys within your GitHub repository under **Settings** ➔ **Secrets and variables** ➔ **Actions**:
    * `DOCKER_USERNAME`: Your login name or account identifier.
    * `DOCKER_TOKEN`: Your generated Personal Access Token (PAT).
+
+## Documentation
+The screenshots below verify the automated build workflows running successfully on GitHub Actions and the resulting images pushed to Docker Hub:
+
+### Running Workflows:
+
+![Frontend Workflow](screenshots/frontend-actions.jpg)
+
+![Backend Workflow](screenshots/backend-actions.jpg)
+
+### Docker Hub Images:
+
+![Frontend Image](screenshots/frontend-image.jpg)
+
+![Backend Image](screenshots/backend-image.jpg)
