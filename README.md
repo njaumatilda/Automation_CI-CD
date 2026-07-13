@@ -82,8 +82,6 @@ To keep builds clean and fast, the logic is decoupled into two separate, multi-s
 * `.github/workflows/frontend.yml` (Handles the frontend pipeline)
 * `.github/workflows/backend.yml` (Handles the backend pipeline)
 
----
-
 ### Multi-Stage Workflow Design
 
 Each workflow isolates its **Continuous Integration (CI)** and **Continuous Delivery (CD)** logic using independent jobs. The delivery stage is strictly gated by the testing stage using the `needs: test` keyword rule, ensuring that broken code is never compiled or pushed to production.
@@ -102,8 +100,6 @@ Each workflow isolates its **Continuous Integration (CI)** and **Continuous Deli
 3. **Dual-Tag Optimization:** Packages and exports production build images using the following tagging mechanics:
    * `:latest` — Updates to track your most current stable version/deployment for immediate server pulls.
    * `:${{ github.sha }}` — Creates an immutable backup matching your unique git commit ID. This maintains an un-overwriteable historical trail of your deployment states, allowing instantaneous rollbacks if a bug surfaces in production later.
-
----
 
 ### Required Secrets Configuration
 
