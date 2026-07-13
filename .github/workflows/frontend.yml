@@ -1,0 +1,50 @@
+name: Frontend Workflow
+
+on:
+    push:
+        branches: [main, dev]
+    pull_request:
+        branches: [main]
+    workflow_dispatch: # adds a manual "Run workflow" button to your GitHub repository webpage
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Spin up Docker Compose containers
+              run: docker-compose up -d --build
+
+            - name: Run Frontend tests
+              run: docker exec frontend_vacation_container npm run test
+
+            - name: Run Frontend linting
+              run: docker exec frontend_vacation_container npm run lint
+
+            - name: Tear down Docker Compose containers
+              if: always()
+              run: docker-compose down -v
+
+    build:
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Login to DockerHub
+              uses: docker/login-action@v2
+              with:
+                  username: ${{ secrets.DOCKER_USERNAME }}
+                  password: ${{ secrets.DOCKER_TOKEN}}
+
+            - name: Build and push Frontend image
+              uses: docker/build-push-action@v4
+              with:
+                  context: ./frontend
+                  push: true
+                  tags: |
+                      ${{ secrets.DOCKER_USERNAME }}/frontend-vacation:latest
+                      ${{ secrets.DOCKER_USERNAME }}/frontend-vacation:${{ github.sha }}
