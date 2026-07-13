@@ -14,18 +14,31 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
 
-            - name: Spin up Docker Compose containers
-              run: docker-compose up -d --build
+            # Set up Node.js on the GitHub runner 
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "16"
+                  cache: "npm"
+                  cache-dependency-path: ./frontend/package-lock.json
 
+            # Install dependencies on the GitHub runner 
+            - name: Install Backend dependencies
+              run: |
+                  cd backend
+                  npm ci
+
+            # Run Backend tests on the GitHub runner 
             - name: Run Backend tests
-              run: docker exec backend_vacation_container npm run test
+              run: |
+                  cd backend
+                  npm run test
 
+            # Run Backend linting on the GitHub runner
             - name: Run Backend linting
-              run: docker exec backend_vacation_container npm run lint
-
-            - name: Tear down Docker Compose containers
-              if: always()
-              run: docker-compose down -v
+              run: |
+                  cd backend
+                  npm run lint
 
     build:
         needs: test
@@ -38,7 +51,7 @@ jobs:
               uses: docker/login-action@v2
               with:
                   username: ${{ secrets.DOCKER_USERNAME }}
-                  password: ${{ secrets.DOCKER_TOKEN}}
+                  password: ${{ secrets.DOCKER_TOKEN }}
 
             - name: Build and push Backend image
               uses: docker/build-push-action@v4
