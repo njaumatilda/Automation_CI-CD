@@ -14,18 +14,31 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v3
 
-            - name: Spin up Docker Compose containers
-              run: docker compose up -d --build
+            # 1. Set up Node.js on the GitHub runner 
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-size: "16"
+                  cache: "npm"
+                  cache-dependency-path: ./frontend/package-lock.json
 
+            # 2. Install dependencies on the GitHub runner 
+            - name: Install Frontend dependencies
+              run: |
+                  cd frontend
+                  npm ci
+
+            # 3. Run Frontend tests on the GitHub runner 
             - name: Run Frontend tests
-              run: docker exec frontend_vacation_container npm run test
+              run: |
+                  cd frontend
+                  npm run test
 
+            # 4. Run Frontend linting on the GitHub runner
             - name: Run Frontend linting
-              run: docker exec frontend_vacation_container npm run lint
-
-            - name: Tear down Docker Compose containers
-              if: always()
-              run: docker compose down -v
+              run: |
+                  cd frontend
+                  npm run lint
 
     build:
         needs: test
