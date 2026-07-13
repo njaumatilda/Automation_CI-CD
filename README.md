@@ -73,3 +73,40 @@ The screenshots attached below show the application being accessed when the cont
 ### App Accessible:
 
 ![Application](screenshots/app-accessible.jpg)
+
+## CI/CD Pipeline Setup
+
+This project implementats automated **CI/CD pipelines** built with GitHub Actions and Docker Hub. 
+
+To keep builds clean and fast, the logic is decoupled into two separate, multi-stage workflows:
+* `.github/workflows/frontend.yml` (Handles the frontend pipeline)
+* `.github/workflows/backend.yml` (Handles the backend pipeline)
+
+---
+
+### Multi-Stage Workflow Design
+
+Each workflow isolates its **Continuous Integration (CI)** and **Continuous Delivery (CD)** logic using independent jobs. The delivery stage is strictly gated by the testing stage using the `needs: test` keyword rule, ensuring that broken code is never compiled or pushed to production.
+
+#### Stage 1: Continuous Integration (CI)
+1. **Runner Provisioning:** Automatically boots a fresh, isolated `ubuntu-latest` virtual machine instance/runner.
+2. **Orchestration Simulation:** Executes `docker-compose up -d --build` to safely build and start the multi-container stack (Frontend, Backend, and PostgreSQL Database) in an isolated, non-interactive shell environment.
+3. **Execution Routing:** Uses direct `docker exec` hooks targeting your running application containers:
+   * Runs test script commands inside your live container contexts.
+   * Executes lint evaluation sequences across the code files.
+4. **Enforced Cleanup:** Triggers a `docker-compose down -v` teardown routine. Backed by an `if: always()` block, this safely purges local cache volumes to guarantee that resources and temporary database storage volumes are stripped out safely regardless of test failure outcomes.
+
+#### Stage 2: Continuous Delivery (CD)
+1. **The Delivery Gate:** Enforces dependency matching (`needs: test`). If any lint check or test fails, the downstream build step is canceled immediately.
+2. **Secure Handshake:** Logs into your registry account securely using `docker/login-action` connected to your repository settings credentials.
+3. **Dual-Tag Optimization:** Packages and exports production build images using the following tagging mechanics:
+   * `:latest` — Updates to track your most current stable version/deployment for immediate server pulls.
+   * `:${{ github.sha }}` — Creates an immutable backup matching your unique git commit ID. This maintains an un-overwriteable historical trail of your deployment states, allowing instantaneous rollbacks if a bug surfaces in production later.
+
+---
+
+### Required Secrets Configuration
+
+To run these workflows successfully, configure the following keys within your GitHub repository under **Settings** ➔ **Secrets and variables** ➔ **Actions**:
+   * `DOCKER_USERNAME`: Your login name or account identifier.
+   * `DOCKER_TOKEN`: Your generated Personal Access Token (PAT).
