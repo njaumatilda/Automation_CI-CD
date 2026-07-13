@@ -1,0 +1,41 @@
+services:
+  db: 
+    image: postgres:16-alpine
+    container_name: postgres_vacation_container
+    environment:
+      POSTGRES_USER: postgres_vacation
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres_vacation_db
+    volumes:
+      - postgres_vacation_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres_vacation -d postgres_vacation_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: backend_vacation_container
+    environment:
+      DATABASE_URL: postgres://postgres_vacation:postgres@db:5432/postgres_vacation_db 
+      PORT: 3001
+      COUNTRIES_API_BASE_URL: https://restcountries.com/v3.1
+    ports:
+      - "3001:3001"
+    depends_on:
+      db: 
+        condition: service_healthy
+    restart: on-failure
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_vacation_container
+    ports: 
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes: 
+  postgres_vacation_data:
+  
